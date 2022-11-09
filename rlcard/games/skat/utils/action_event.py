@@ -17,14 +17,21 @@ from skat_card import SkatCard
 #       77 to 108 -> play_card_action_id
 # ====================================
 
+# This table of bids lists every unique bid value available within Skat
 bid_table = [18, 20, 22, 23, 24, 27, 30, 33, 35, 36, 40, 44, 45, 46, 48, 50, 54, 55, 59, 60, 63,
              66, 70, 72, 77, 80, 81, 84, 88, 90, 96, 99, 100, 108, 110, 117, 120, 121, 126, 130,
              132, 135, 140, 143, 144, 150, 153, 154, 156, 160, 162, 165, 168, 170, 176, 180, 187,
              192, 198, 204, 216, 240, 264]
+# Every type of contract available in Skat
 contract_table = ['D', 'H', 'S', 'C', 'G', 'N']
+# Every type of contract modifier available within Skat
+# Note that this does not include unique modifiers for winning vs. declaring Schneider/Schwarz
 modifier_table = ['Skat', 'Hand', 'Schneider', 'Schwarz', 'Open']
 
 class ActionEvent(object):
+    '''Game-level abstraction of events taken by RL agent during play
+    '''
+    # table of action id references used in construction of actions by action id 
     no_bid_action_id = 0
     first_bid_action_id = 1
     pass_action_id = 64
@@ -32,21 +39,31 @@ class ActionEvent(object):
     first_modifier_action_id = 71
     finish_contract_action_id = 76
     first_play_card_action_id = 77
-    
+
     def __init__(self, action_id: int):
+        ''' Initialize an abstract ActionEvent, should not normally do
+        '''
         self.action_id = action_id
-        
+
     def __eq__(self, other):
         result = False
-        if (isinstance(other, ActionEvent)):
+        if isinstance(other, ActionEvent):
             result = self.action_id == other.action_id
         return result
-    
+
     def __repr__(self):
         return self.__str__()
-    
+
     @staticmethod
     def from_action_id(action_id: int):
+        ''' Construct an ActionEvent from a given action_id
+
+        Args:
+            action_id: Id of action to retrieve, integer
+
+        Returns:
+            (ActionEvent): Action associated with given action_id 
+        '''
         if action_id == ActionEvent.pass_action_id:
             return PassAction()
         elif action_id == ActionEvent.finish_contract_action_id:
@@ -69,15 +86,20 @@ class ActionEvent(object):
             return PlayCardAction(card)
         else:
             raise Exception(f'ActionEvent from_action_id: invalid action_id={action_id}')
-        
+
     @staticmethod
     def get_num_actions():
+        ''' Get the total number of unique actions within the game
+        '''
         return 107
-    
+
 class CallAction(ActionEvent):
-    pass
+    ''' Interface for bidding-related ActionEvents
+    '''
 
 class BidAction(CallAction):
+    ''' ActionEvent for bidding a specific amount, initialized with bid_amount (from table)
+    '''
     def __init__(self, bid_amount: int):
         if bid_amount not in bid_table:
             raise Exception(f'BidAction has invalid bid amount {bid_amount}')
@@ -89,6 +111,8 @@ class BidAction(CallAction):
         return f'{self.bid_amount}'
 
 class PassAction(CallAction):
+    ''' ActionEvent for passing during the bidding round
+    '''
     def __init__(self):
         super().__init__(action_id=ActionEvent.pass_action_id)
 
@@ -96,9 +120,12 @@ class PassAction(CallAction):
         return "pass"
     
 class DeclareAction(ActionEvent):
-    pass
+    ''' Interface for contract declaration-related ActionEvents
+    '''
 
 class DeclareContractAction(DeclareAction):
+    ''' ActionEvent for declaring a specific type of contract, with the contract given
+    '''
     def __init__(self, contract_type: str):
         if contract_type not in contract_table:
             raise Exception(f'DeclareContractAction has invalid contract: {contract_type}')
@@ -110,6 +137,8 @@ class DeclareContractAction(DeclareAction):
         return self.contract_type
 
 class DeclareModifierAction(DeclareAction):
+    '''ActionEvent for declaring a specific modifier to the current contract, with the modifier type
+    '''
     def __init__(self, modifier_type: str):
         if modifier_type not in modifier_table:
             raise Exception(f'DeclareModifierAction has invalid modifier: {modifier_type}')
@@ -119,15 +148,19 @@ class DeclareModifierAction(DeclareAction):
 
     def __str__(self):
         return self.modifier_type
-    
+
 class FinishContractAction(DeclareAction):
+    ''' ActionEvent to finish declaring the current contract, thus starting play
+    '''
     def __init__(self):
         super().__init__(action_id=ActionEvent.finish_contract_action_id)
-        
+
     def __str__(self):
         return "finish"
 
 class PlayCardAction(ActionEvent):
+    ''' ActionEvent to play a card during around, initialized with the given card
+    '''
     def __init__(self, card: SkatCard):
         play_card_action_id = ActionEvent.first_play_card_action_id + card.card_id
         super().__init__(action_id=play_card_action_id)
@@ -135,5 +168,4 @@ class PlayCardAction(ActionEvent):
 
     def __str__(self):
         return f"{self.card}"
-
     

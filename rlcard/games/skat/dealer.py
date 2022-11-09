@@ -8,7 +8,7 @@ from typing import List
 
 from rlcard.games.base import Card
 from player import SkatPlayer
-import utils.utils
+import utils.utils as utils
 
 class SkatDealer:
     ''' Initialize a dealer for the game of Skat
@@ -17,10 +17,14 @@ class SkatDealer:
     '''
     def __init__(self, dealer_id: int, np_random):
         self.np_random = np_random
+        # associated id
         self.dealer_id = dealer_id
+        # shuffled deck for use in dealing
         self.shuffled_deck: List[Card] = utils.generate_deck()
         self.np_random.shuffle(self.shuffled_deck)
+        # skat made during dealing
         self.skat: List[Card] = []
+        # 
         self.deck: List[Card] = self.shuffled_deck.copy()
 
     def deal_cards(self, player: SkatPlayer, num: int):
@@ -34,5 +38,7 @@ class SkatDealer:
             player.hand.append(self.deck.pop())
     
     def make_skat(self):
+        ''' Make the Skat for the round
+        '''
         for _ in range(2):
             self.skat.append(self.deck.pop())
