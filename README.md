@@ -1,6 +1,6 @@
 # rlcard-skat
 
-This repo is an implementation of the card game Skat into [RLCard](https://github.com/datamllab/rlcard), as part of a capstone project for CMSC473 at the University of Maryland.
+This repo is an implementation of the card game Skat into [RLCard](https://github.com/datamllab/rlcard), as part of a capstone project for CMSC473/673 at the University of Maryland.
 
 ### Team Members:
 
