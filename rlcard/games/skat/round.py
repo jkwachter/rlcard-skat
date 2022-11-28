@@ -197,8 +197,25 @@ class SkatRound:
             previous_top = self.top_bidder
             self.top_bidder = current_player
             return previous_top
+        
+    def _get_current_scores(self) -> List[int]:
+        '''Get the current scores for the round based on the tricks taken by each player.
+        
+        Returns:
+            List[int]: The scores for all cards taken by each player
+        '''
+        round_scores = [0]*3
+        for i in range(3):
+            round_scores[i] = 0
+            player_tricks = self.tricks_won[i]
+            for trick in player_tricks:
+                for move in trick:
+                    round_scores[i] += utils.get_value_of_card(move.card)
+                    
+        return round_scores
 
-    def _determine_schneider_schwarz(self) -> Tuple[bool, bool, bool]:
+
+    def determine_schneider_schwarz(self) -> Tuple[bool, bool, bool]:
         '''Determine if Schneider or Schwarz has been met for the round
 
         Returns:
