@@ -9,7 +9,6 @@ from action_event import ActionEvent, BidAction, PassAction, DeclareContractActi
 from skat_card import SkatCard
 
 from ..player import SkatPlayer
-from ..dealer import SkatDealer
 
 class SkatMove(object):
     ''' Round-based representation of actions within the game

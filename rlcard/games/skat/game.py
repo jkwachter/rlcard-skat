@@ -12,6 +12,8 @@ from judger import SkatJudger
 from round import SkatRound
 from utils.action_event import ActionEvent, CallAction, DeclareAction, PlayCardAction
 
+import utils.utils as utils
+
 class SkatGame:
     ''' The Game class is designed to interface with the SkatEnv, providing information about the
         state and the actions in the game. 
@@ -90,14 +92,71 @@ class SkatGame:
     def get_state(self):
         ''' TODO: Implement this function!
         '''
+        
+        abstract_state = self.round.get_imperfect_information()
+        state = {}
+        player_id = abstract_state['current_player_id']
+        
         ### Construct a representation of each players' hand
+        state['hand'] = np.array([[0]*32]*3)
+        player_hand = abstract_state['hand']
+        for card in player_hand:
+            state['hand'][player_id][card.card_id] = 1
         ### Construct a representation of the trick pile for each player
+        state['curr_tricks'] = np.array([[0]*32]*3)
+        for i in range(3):
+            trick_card_id = abstract_state['trick_moves'][i].card_id
+            state['curr_tricks'][i][trick_card_id] = 1
+        
         ### Construct a representation of the won cards for each player
+        state['past_tricks'] = np.array([[0]*32]*3)
+        for i in range(3):
+            for trick in self.round.tricks_won[i]:
+                for move in trick:
+                    state['past_tricks'][i][move.card.card_id] = 1
         ### Construct a representation of the current hidden cards
+        state['hidden'] = np.array([0]*32)
+        for i in range(32):
+            if np.sum(state['past_tricks'][:,i] + state['curr_tricks'][:,i] + state['hand'][:,i]) == 0:
+                state['hidden'][i] = 1
+        
         ### Represent the current contract
+        state['contract'] = np.array([0]*14)
+        contract_id = utils.get_contract_index(abstract_state['contract'])
+        if contract_id != -1:
+            state['contract'][contract_id] = 1
+            for contract_elem in abstract_state['contract']:
+                    elem_id = utils.get_modifier_index(contract_elem)
+                    if elem_id != 1:
+                        state['contract'][6+elem_id] = 1
+        (schneider, schwarz, for_dec) = self.round.determine_schneider_schwarz()
+        state['contract'][11] = 1 if schneider else 0
+        state['contract'][12] = 1 if schwarz else 0
+        state['contract'][13] = 1 if for_dec else 0
+        
         ### Represent the dealer and current player
+        state['dealer'] = np.array([0, 0, 0])
+        state['dealer'][abstract_state['dealer']] = 1
+        state['curr_player'] = np.array([0, 0, 0])
+        state['curr_player']['player_id'] = 1
+        
         ### Represent the phase of the game
-        pass
+        state['game_phase'] = np.array([0, 0, 0, 0])
+        if round.round_phase == 'bid':
+            state['game_phase'][0] = 1
+        elif round.round_phase == 'declare':
+            state['game_phase'][1] = 1
+        elif round.round_phase == 'play':
+            state['game_phase'][2] = 1
+        else:
+            state['game_phase'][3] = 1
+        
+        ### Represent the legal actions that can currently be taken
+        state['legal_actions'] = np.array([0]*ActionEvent.get_num_actions())
+        for legal_action in self.judger.get_legal_actions():
+            state['legal_actions'][legal_action.action_id] = 1
+        return state
+        
     
     def get_num_players(self):
         ''' Get the number of players of the game
@@ -119,5 +178,6 @@ class SkatGame:
         sz += 2*3 # Dealer representation (3) [players]
         # Current player representation (3)
         sz += 3 # Game phase representation (3) [bidding, declaring, playing]
+        sz += 108 # Action representation
         return sz
 

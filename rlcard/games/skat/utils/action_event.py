@@ -91,7 +91,7 @@ class ActionEvent(object):
     def get_num_actions():
         ''' Get the total number of unique actions within the game
         '''
-        return 107
+        return 108
 
 class CallAction(ActionEvent):
     ''' Interface for bidding-related ActionEvents

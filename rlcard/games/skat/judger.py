@@ -82,8 +82,7 @@ class SkatJudger:
             
 
     def get_legal_actions(self) -> List[ActionEvent]:
-        ''' TODO: Implement this function!
-            Get the current legal actions for the round
+        ''' Get the current legal actions for the round
         
         Returns:
             (List[ActionEvent]): The legal actions associated with the current round state
@@ -132,5 +131,6 @@ class SkatJudger:
                 legal_cards = [card for card in hand if (card in utils.trump_suit(contract)) or (card in utils.trick_suit(contract, trick_moves[0].card))]
                 for card in legal_cards:
                     legal_actions.append(PlayCardAction(card=card))
+        return legal_actions
                 
                 

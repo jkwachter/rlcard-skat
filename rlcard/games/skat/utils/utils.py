@@ -105,6 +105,8 @@ def get_contract_index(contract: List[str]) -> int:
         for elem in contract:
             if elem in contract_table:
                 return contract_table.index(elem)
+    else:
+        return -1
 
 def get_modifier_index(modifier: str) -> int:
     ''' Get the numerical index of a given modifier

@@ -128,7 +128,7 @@ class SkatRound:
                     else:
                         return matadors
 
-    def _get_trick_moves(self) -> List[PlayCardMove]:
+    def get_trick_moves(self) -> List[PlayCardMove]:
         '''Get all of the moves associated with the current trick being played
         '''
         trick_moves: List[PlayCardMove] = []
@@ -141,7 +141,7 @@ class SkatRound:
                     if isinstance(move, PlayCardMove):
                         trick_moves.append(move)
                 if len(trick_moves) != cards_to_trick:
-                    raise Exception(f'_get_trick_moves: invalid trick_moves={[str(move.card) for move in trick_moves]} for length {cards_to_trick}')
+                    raise Exception(f'get_trick_moves: invalid trick_moves={[str(move.card) for move in trick_moves]} for length {cards_to_trick}')
         return trick_moves
 
     def _calculate_current_scores(self) -> List[int]:
@@ -302,7 +302,7 @@ class SkatRound:
         card = action.card
         current_player.remove_card(card)
         self.cards_played += 1
-        trick_moves = self._get_trick_moves()
+        trick_moves = self.get_trick_moves()
         ## if everyone has moved to the current trick, it is over and we need to decide the score
         if len(trick_moves) == 3:
             # determine which card and player have won the round
@@ -342,7 +342,7 @@ class SkatRound:
         state = {}
         trick_moves = [None, None, None]
         if self.is_declaring_over():
-            for trick_move in self._get_trick_moves():
+            for trick_move in self.get_trick_moves():
                 trick_moves[trick_move.player.player_id] = trick_move.card
         state['move_count'] = len(self.move_history)
         state['current_player_id'] = self.current_player_id
@@ -357,13 +357,12 @@ class SkatRound:
         return state
 
     def get_imperfect_information(self):
-        ''' TODO: Complete this function!
-            Get imperfect information about the state of the game from the perspective of the current player
+        ''' Get imperfect information about the state of the game from the perspective of the current player
         '''
         state = {}
         trick_moves = [None, None, None]
         if self.is_declaring_over():
-            for trick_move in self._get_trick_moves():
+            for trick_move in self.get_trick_moves():
                 trick_moves[trick_move.player.player_id] = trick_move.card
         state['dealer'] = self.dealer_pos
         state['current_player_id'] = self.current_player_id
@@ -373,7 +372,8 @@ class SkatRound:
         state['contract'] = self.round_contract
         state['contract_value'] = self.contract_score * self.game_modifier
         state['hand'] = self.players[self.current_player_id].hand
-        # state['past_tricks']
+        state['past_tricks'] = self.tricks_won
         state['scores'] = self._calculate_current_scores()
         state['trick_moves'] = trick_moves
+        return state
         
