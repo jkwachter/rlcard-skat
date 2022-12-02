@@ -5,8 +5,8 @@
 """
 from typing import List
 
-from action_event import ActionEvent, BidAction, PassAction, DeclareContractAction, DeclareModifierAction, FinishContractAction, PlayCardAction
-from skat_card import SkatCard
+from .action_event import ActionEvent, BidAction, PassAction, DeclareContractAction, DeclareModifierAction, FinishContractAction, PlayCardAction
+from .skat_card import SkatCard
 
 from ..player import SkatPlayer
 

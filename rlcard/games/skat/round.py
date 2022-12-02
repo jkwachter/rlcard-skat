@@ -6,12 +6,12 @@
 
 from typing import List, Tuple
 
-from utils.move import SkatMove, DealHandMove, DeclareContractMove, DeclareModifierMove, FinishContractMove, MakePassMove, BidMove, DeclareMove, PlayCardMove
-from utils.action_event import BidAction, PassAction, DeclareContractAction, DeclareModifierAction, FinishContractAction, PlayCardAction, CallAction, DeclareAction
+from .utils.move import SkatMove, DealHandMove, DeclareContractMove, DeclareModifierMove, FinishContractMove, MakePassMove, BidMove, DeclareMove, PlayCardMove
+from .utils.action_event import BidAction, PassAction, DeclareContractAction, DeclareModifierAction, FinishContractAction, PlayCardAction, CallAction, DeclareAction
 
-from dealer import SkatDealer
-from player import SkatPlayer
-import utils.utils as utils
+from .dealer import SkatDealer
+from .player import SkatPlayer
+from .utils import utils as utils
 
 class SkatRound:
     ''' Abstract representation of each individual round within a game of Skat

@@ -8,11 +8,11 @@ from typing import List
 
 import numpy as np
 
-from judger import SkatJudger
-from round import SkatRound
-from utils.action_event import ActionEvent, CallAction, DeclareAction, PlayCardAction
+from .judger import SkatJudger
+from .round import SkatRound
+from .utils.action_event import ActionEvent, CallAction, DeclareAction, PlayCardAction
 
-import utils.utils as utils
+from .utils import utils as utils
 
 class SkatGame:
     ''' The Game class is designed to interface with the SkatEnv, providing information about the

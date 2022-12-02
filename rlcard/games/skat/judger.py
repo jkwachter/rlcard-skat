@@ -7,12 +7,11 @@
 from typing import List
 import numpy as np
 
-from game import SkatGame
-import utils.utils as utils
+from .utils import utils as utils
 
-from utils.action_event import PlayCardAction, ActionEvent
-from utils.action_event import DeclareContractAction, DeclareModifierAction, FinishContractAction, DeclareAction
-from utils.action_event import BidAction, PassAction
+from .utils.action_event import PlayCardAction, ActionEvent
+from .utils.action_event import DeclareContractAction, DeclareModifierAction, FinishContractAction, DeclareAction
+from .utils.action_event import BidAction, PassAction
 
 bid_table = [18, 20, 22, 23, 24, 27, 30, 33, 35, 36, 40, 44, 45, 46, 48, 50, 54, 55, 59, 60, 63,
              66, 70, 72, 77, 80, 81, 84, 88, 90, 96, 99, 100, 108, 110, 117, 120, 121, 126, 130,
@@ -24,10 +23,10 @@ modifier_table = ['Skat', 'Hand', 'Schneider', 'Schwarz', 'Open']
 
 class SkatJudger:
     
-    def __init__(self, game: SkatGame):
+    def __init__(self, game):
         ''' Initialize a judger based off of the given game being played
         '''
-        self.game: SkatGame = game
+        self.game = game
         
     def _get_round_scores(self) -> List[int]:
         ''' Get the current scores for the round

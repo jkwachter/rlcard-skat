@@ -7,8 +7,8 @@
 from typing import List
 
 from rlcard.games.base import Card
-from player import SkatPlayer
-import utils.utils as utils
+from .player import SkatPlayer
+from .utils import utils as utils
 
 class SkatDealer:
     ''' Initialize a dealer for the game of Skat

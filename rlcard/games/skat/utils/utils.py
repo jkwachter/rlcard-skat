@@ -3,7 +3,7 @@
 
 from typing import List
 
-from skat_card import SkatCard
+from .skat_card import SkatCard
 
 valid_suit = ['D', 'H', 'S', 'C']
 valid_game_rank = ['7', '8', '9', 'Q', 'K', 'T', 'A', 'J']

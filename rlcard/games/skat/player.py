@@ -7,7 +7,7 @@
 
 from typing import List
 
-from utils.skat_card import SkatCard
+from .utils.skat_card import SkatCard
 
 class SkatPlayer:
     '''Representation of a player of a given game of Skat

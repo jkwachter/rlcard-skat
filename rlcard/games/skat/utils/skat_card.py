@@ -63,7 +63,7 @@ class SkatCard(Card):
         ''' Initialize a SkatCard
         '''
         super().__init__(suit=suit, rank=rank)
-        (suit_i, rank_i) = (SkatCard.suits.index(self.suit), SkatCard.suits.index(self.rank))
+        (suit_i, rank_i) = (SkatCard.suits.index(self.suit), SkatCard.ranks.index(self.rank))
         self.card_id = rank_i + 8*suit_i
 
     def __str__(self):

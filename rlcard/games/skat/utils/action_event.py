@@ -4,7 +4,7 @@
     Last Modified: 27/10/2022
 """
 
-from skat_card import SkatCard
+from .skat_card import SkatCard
 
 # ====================================
 # Action_ids:
