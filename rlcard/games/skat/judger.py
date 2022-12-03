@@ -114,7 +114,7 @@ class SkatJudger:
                     if 'Hand' not in curr_contract and 'Skat' not in curr_contract:
                         legal_actions.append(DeclareModifierAction('Skat'))
                         legal_actions.append(DeclareModifierAction('Hand'))
-                    else:
+                    elif 'N' not in curr_contract:
                         legal_actions.append(FinishContractAction())
                         if 'Hand' in curr_contract:
                             if 'Schneider' not in curr_contract:
@@ -123,6 +123,9 @@ class SkatJudger:
                                 legal_actions.append(DeclareModifierAction('Schwarz'))
                             elif 'Open' not in curr_contract:
                                 legal_actions.append(DeclareModifierAction('Open'))
+                    else:
+                        if 'Open' not in curr_contract:
+                            legal_actions.append(DeclareModifierAction('Open'))
             if round.round_phase is 'play':
                 contract = round.round_contract
                 trick_moves = self.game.round.get_trick_moves()

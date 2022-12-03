@@ -71,6 +71,15 @@ class SkatEnv(Env):
             (list): A list of legal actions' id.
         '''
         return self.game.judger.get_legal_actions(self.game.round)
+
+    def _get_action_history(self):
+        ''' Get the list of previous actions in this space. 
+        
+        Returns:
+            List[int] -> A list of ActionEvent ids
+        '''
+
+        return self.game.round.move_history
     
     
     
