@@ -67,98 +67,101 @@ class TestSkatEnv(unittest.TestCase):
         pass
 
     def test_run(self):
-        env = rlcard.make('skat')
-        env.set_agents([RandomAgent(env.num_actions) for _ in range(env.num_players)])
-        trajectories, payoffs = env.run(is_training = False)
-        self.assertEqual(len(trajectories), 3)
-        # Now we need to determine that the game logic is internally consistent between games
-        # This requires action-by-action analysis of each action within the game
-        round = env.game.round
-        round_phase = 'bid'
-        top_bid, top_bidder, num_passes, locked_out_players = 0, None, 0, [False, False, False]
-        contract, declaration_made = [], True
-        current_trick, legal_cards = [None, None, None]
-        for move in env.game.round.move_history:
-            player = move.player
-            player_id = player.player_id
-            if isinstance(move, BidMove):
-                # Must be in the bidding phase
-                self.assertEqual(round_phase, 'bid')
-                # Player who is bidding must not have already passed
-                self.assertNotEqual(locked_out_players[player_id], True)
-                attempted_bid = move.bid_action.bid_amount
-                seniority = (player == round._forehand()) or (player == round._middlehand() and top_bidder == round._backhand())
-                # Bid must be greater than all previous bids in sequence
-                # (the bid can be equal if the player has table priority)
-                if (seniority):
-                    self.assertGreaterEqual(attempted_bid, top_bid)
-                else:
-                    self.assertGreater(attempted_bid, top_bid)
-                top_bid = attempted_bid
-                top_bidder = player
-            elif isinstance(move, MakePassMove):
-                # Must be in the bidding phase
-                self.assertEqual(round_phase, 'bid')
-                # Player who is passing must not have already passed
-                self.assertNotEqual(locked_out_players[player_id], True)
-                num_passes += 1
-                # No more than two pass moves occur throughout the bidding phase
-                self.assertLessEqual(num_passes, 2)
-                locked_out_players[player_id] = True
-                if (num_passes == 2):
-                    round_phase = 'declare'
-            elif isinstance(move, DeclareContractMove):
-                #Must be in the declaration phase
-                self.assertEqual(round_phase, 'declare')
-                #The person declaring must be the top bidder
-                self.assertEqual(player, top_bidder)
-                # Only occurs once
-                self.assertEqual(declaration_made, False)
-                contract.append(move.declare_action.contract_type)
-                declaration_made = True
-            elif isinstance(move, DeclareModifierMove):
-                #Must be in the declaration phase
-                self.assertEqual(round_phase, 'declare')
-                #The person declaring must be the top bidder
-                self.assertEqual(player, top_bidder)
-                modifier = move.declare_action.modifier_type
-                #The modifier must not already be in the contract
-                self.assertNotIn(modifier, contract)
-                # The modifier declared follows some rules on the contract
-                if modifier == 'Schneider':
-                    self.assertIn('Hand', contract)
-                elif modifier == 'Schwarz':
-                    self.assertIn('Hand', contract)
-                    self.assertIn('Schneider', contract)
-                elif modifier == 'Open' and ('N' not in contract):
-                    self.assertIn('Hand', contract)
-                elif modifier == 'Skat':
-                    self.assertNotIn('Hand', contract)
-                elif modifier == 'Hand':
-                    self.assertNotIn('Skat', contract)
-                contract.append(modifier)
-            elif isinstance(move, FinishContractMove):
-                #Must be in the declaration phase
-                self.assertEqual(round_phase, 'declare')
-                #The person declaring must be the top bidder
-                self.assertEqual(player, top_bidder)
-                round_phase = 'play'
-            elif isinstance(move, PlayCardMove):
-                # Must be in the playing phase
-                self.assertEqual(round_phase, 'play')
-                self.assertIsNone(current_trick[player_id])
-                card = move.action.card
-                if current_trick == [None, None, None]:
-                    trick_suit = utils.trick_suit(contract, card)
-                    trump_suit = utils.trump_suit(contract)
-                    legal_cards = trick_suit + trump_suit
-                self.assertIn(card, legal_cards)
-                current_trick[player_id] = card 
-                flag = True
-                for c in current_trick:
-                    if c is None: flag = False 
-                if flag:
-                    current_trick = [None, None, None]
+        for i in range(1000):
+            # We want to run many random tests and make sure we are not
+            # playing nonsensical games. 
+            env = rlcard.make('skat')
+            env.set_agents([RandomAgent(env.num_actions) for _ in range(env.num_players)])
+            trajectories, payoffs = env.run(is_training = False)
+            self.assertEqual(len(trajectories), 3)
+            # Now we need to determine that the game logic is internally consistent between games
+            # This requires action-by-action analysis of each action within the game
+            round = env.game.round
+            round_phase = 'bid'
+            top_bid, top_bidder, num_passes, locked_out_players = 0, None, 0, [False, False, False]
+            contract, declaration_made = [], True
+            current_trick, legal_cards = [None, None, None]
+            for move in env.game.round.move_history:
+                player = move.player
+                player_id = player.player_id
+                if isinstance(move, BidMove):
+                    # Must be in the bidding phase
+                    self.assertEqual(round_phase, 'bid')
+                    # Player who is bidding must not have already passed
+                    self.assertNotEqual(locked_out_players[player_id], True)
+                    attempted_bid = move.bid_action.bid_amount
+                    seniority = (player == round._forehand()) or (player == round._middlehand() and top_bidder == round._backhand())
+                    # Bid must be greater than all previous bids in sequence
+                    # (the bid can be equal if the player has table priority)
+                    if (seniority):
+                        self.assertGreaterEqual(attempted_bid, top_bid)
+                    else:
+                        self.assertGreater(attempted_bid, top_bid)
+                    top_bid = attempted_bid
+                    top_bidder = player
+                elif isinstance(move, MakePassMove):
+                    # Must be in the bidding phase
+                    self.assertEqual(round_phase, 'bid')
+                    # Player who is passing must not have already passed
+                    self.assertNotEqual(locked_out_players[player_id], True)
+                    num_passes += 1
+                    # No more than two pass moves occur throughout the bidding phase
+                    self.assertLessEqual(num_passes, 2)
+                    locked_out_players[player_id] = True
+                    if (num_passes == 2):
+                        round_phase = 'declare'
+                elif isinstance(move, DeclareContractMove):
+                    #Must be in the declaration phase
+                    self.assertEqual(round_phase, 'declare')
+                    #The person declaring must be the top bidder
+                    self.assertEqual(player, top_bidder)
+                    # Only occurs once
+                    self.assertEqual(declaration_made, False)
+                    contract.append(move.declare_action.contract_type)
+                    declaration_made = True
+                elif isinstance(move, DeclareModifierMove):
+                    #Must be in the declaration phase
+                    self.assertEqual(round_phase, 'declare')
+                    # The person declaring must be the top bidder
+                    self.assertEqual(player, top_bidder)
+                    modifier = move.declare_action.modifier_type
+                    #The modifier must not already be in the contract
+                    self.assertNotIn(modifier, contract)
+                    # The modifier declared follows some rules on the contract
+                    if modifier == 'Schneider':
+                        self.assertIn('Hand', contract)
+                    elif modifier == 'Schwarz':
+                        self.assertIn('Hand', contract)
+                        self.assertIn('Schneider', contract)
+                    elif modifier == 'Open' and ('N' not in contract):
+                        self.assertIn('Hand', contract)
+                    elif modifier == 'Skat':
+                        self.assertNotIn('Hand', contract)
+                    elif modifier == 'Hand':
+                        self.assertNotIn('Skat', contract)
+                    contract.append(modifier)
+                elif isinstance(move, FinishContractMove):
+                    #Must be in the declaration phase
+                    self.assertEqual(round_phase, 'declare')
+                    # The person declaring must be the top bidder
+                    self.assertEqual(player, top_bidder)
+                    round_phase = 'play'
+                elif isinstance(move, PlayCardMove):
+                    # Must be in the playing phase
+                    self.assertEqual(round_phase, 'play')
+                    self.assertIsNone(current_trick[player_id])
+                    card = move.action.card
+                    if current_trick == [None, None, None]:
+                        trick_suit = utils.trick_suit(contract, card)
+                        trump_suit = utils.trump_suit(contract)
+                        legal_cards = trick_suit + trump_suit
+                    self.assertIn(card, legal_cards)
+                    current_trick[player_id] = card 
+                    flag = True
+                    for c in current_trick:
+                        if c is None: flag = False 
+                    if flag:
+                        current_trick = [None, None, None]
 
     def test_get_legal_actions(self):
         env = rlcard.make('skat')
