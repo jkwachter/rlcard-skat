@@ -42,7 +42,16 @@ class SkatEnv(Env):
         Returns:
             (numpy.array): The extracted state
         '''
-        return self.game.get_state()
+        state =  self.game.get_state()
+        rep = [state['hand'], state['curr_tricks'], state['past_tricks'], state['hidden'], state['contract'], state['dealer'], state['curr_player'], state['game_phase']]
+        obs = np.concatenate([e.flatten() for e in rep])
+        raw_legal_actions = list(state['legal_actions'].keys())
+        extracted_state = {'obs': obs, 
+                           'raw_obs': obs,
+                           'legal_actions': state['legal_actions'], 
+                           'raw_legal_actions': raw_legal_actions}
+        return extracted_state
+
     
     def _decode_action(self, action_id):
         ''' Decode action id to the action in the game.
@@ -62,7 +71,7 @@ class SkatEnv(Env):
         Returns:
             (list): A list of legal actions' id.
         '''
-        return self.game.judger.judge_payoffs(self.game.round.top_bidder)
+        return self.game.judger.judge_payoffs()
     
     def _get_legal_actions(self):
         ''' Get all legal actions for current state.
@@ -70,16 +79,7 @@ class SkatEnv(Env):
         Returns:
             (list): A list of legal actions' id.
         '''
-        return self.game.judger.get_legal_actions(self.game.round)
-
-    def _get_action_history(self):
-        ''' Get the list of previous actions in this space. 
-        
-        Returns:
-            List[int] -> A list of ActionEvent ids
-        '''
-
-        return self.game.round.move_history
+        return self.game.judger.get_legal_actions()
     
     
     
