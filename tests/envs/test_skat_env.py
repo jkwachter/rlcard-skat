@@ -1,5 +1,7 @@
 import unittest
 
+import numpy as np
+
 import rlcard
 from rlcard.agents.random_agent import RandomAgent
 from .determism_util import is_deterministic
@@ -25,12 +27,12 @@ class TestSkatEnv(unittest.TestCase):
     def test_reset_and_extract_state(self):
         env = rlcard.make('skat')
         state, _ = env.reset()
-        self.assertEqual(state['obs'].size, 108)
+        self.assertEqual(len(state['legal_actions']), 64)
 
     def test_decode_action(self):
         env = rlcard.make('skat')
         env.reset()
-        for i in range(1, ActionEvent.get_num_actions):
+        for i in range(1, ActionEvent.get_num_actions()):
             action = env._decode_action(i)
             if i == ActionEvent.pass_action_id:
                 self.assertEqual(action, PassAction())
@@ -58,19 +60,37 @@ class TestSkatEnv(unittest.TestCase):
     # Testing that a single step does transition:
     def test_step(self):
         env = rlcard.make('skat')
-        _, player_id = env.reset()
-        player = env.game.players[player_id]
-        _, next_player_id = env.step(BidAction(18))
+        state, player_id = env.reset()
+        round = env.game.round
+        player = round.players[round.current_player_id]
+        legal_actions = env.game.judger.get_legal_actions()
+        next_state, next_player_id = env.step(np.random.choice(legal_actions).action_id)
+        next_player = round.players[round.current_player_id]
+        # Should be the next player in sequence, not the same player
         self.assertNotEqual(player_id, next_player_id)
+        self.assertNotEqual(player, next_player)
+        # A move should be added to the move history
+        move_list = round.move_history
+        self.assertEqual(len(move_list), 2)
 
     def test_step_back(self):
         pass
 
+    # CURRENT NOTES ON TEST_RUN:
+    # We have two known issues at the moment:
+    # 1. When playing cards, the player can select some cards not in their hand.
+    # I am unsure as to why it is doing this and need to look further.
+    # 2. The action list can be empty.
+    # This should be impossible--I suspect it is not adequately recognizing that
+    # a given round is over.
+
     def test_run(self):
-        for i in range(1000):
+        env = rlcard.make('skat')
+        for i in range(1):
             # We want to run many random tests and make sure we are not
             # playing nonsensical games. 
-            env = rlcard.make('skat')
+            env.reset()
+            hands = [env.game.round.players[i].hand for i in range(3)]
             env.set_agents([RandomAgent(env.num_actions) for _ in range(env.num_players)])
             trajectories, payoffs = env.run(is_training = False)
             self.assertEqual(len(trajectories), 3)
@@ -79,9 +99,9 @@ class TestSkatEnv(unittest.TestCase):
             round = env.game.round
             round_phase = 'bid'
             top_bid, top_bidder, num_passes, locked_out_players = 0, None, 0, [False, False, False]
-            contract, declaration_made = [], True
-            current_trick, legal_cards = [None, None, None]
-            for move in env.game.round.move_history:
+            contract, declaration_made = [], False
+            current_trick, legaL_cards = [None, None, None], []
+            for move in round.move_history[1:]:
                 player = move.player
                 player_id = player.player_id
                 if isinstance(move, BidMove):
@@ -89,12 +109,12 @@ class TestSkatEnv(unittest.TestCase):
                     self.assertEqual(round_phase, 'bid')
                     # Player who is bidding must not have already passed
                     self.assertNotEqual(locked_out_players[player_id], True)
-                    attempted_bid = move.bid_action.bid_amount
+                    attempted_bid = move.action.bid_amount
                     seniority = (player == round._forehand()) or (player == round._middlehand() and top_bidder == round._backhand())
                     # Bid must be greater than all previous bids in sequence
                     # (the bid can be equal if the player has table priority)
                     if (seniority):
-                        self.assertGreaterEqual(attempted_bid, top_bid)
+                        self.assertEqual(attempted_bid, top_bid)
                     else:
                         self.assertGreater(attempted_bid, top_bid)
                     top_bid = attempted_bid
@@ -117,14 +137,14 @@ class TestSkatEnv(unittest.TestCase):
                     self.assertEqual(player, top_bidder)
                     # Only occurs once
                     self.assertEqual(declaration_made, False)
-                    contract.append(move.declare_action.contract_type)
+                    contract.append(move.action.contract_type)
                     declaration_made = True
                 elif isinstance(move, DeclareModifierMove):
                     #Must be in the declaration phase
                     self.assertEqual(round_phase, 'declare')
                     # The person declaring must be the top bidder
                     self.assertEqual(player, top_bidder)
-                    modifier = move.declare_action.modifier_type
+                    modifier = move.action.modifier_type
                     #The modifier must not already be in the contract
                     self.assertNotIn(modifier, contract)
                     # The modifier declared follows some rules on the contract
@@ -149,14 +169,25 @@ class TestSkatEnv(unittest.TestCase):
                 elif isinstance(move, PlayCardMove):
                     # Must be in the playing phase
                     self.assertEqual(round_phase, 'play')
+                    # No card from this player has already been played to the trick
                     self.assertIsNone(current_trick[player_id])
                     card = move.action.card
                     if current_trick == [None, None, None]:
                         trick_suit = utils.trick_suit(contract, card)
                         trump_suit = utils.trump_suit(contract)
                         legal_cards = trick_suit + trump_suit
-                    self.assertIn(card, legal_cards)
+                    # The card must be in the hand of the player who played it
+                    self.assertIn(card, hands[player_id])
+                    # The card must be playable to the current trick
+                    if card not in legal_cards:
+                        for c in hands[player_id]:
+                            # If this card is not legal to the trick
+                            # Then none of the cards in the player's hand may be
+                            self.assertNotIn(c, legal_cards)
+                    else:
+                        self.assertIn(card, legal_cards)
                     current_trick[player_id] = card 
+                    hands[player_id].remove(card)
                     flag = True
                     for c in current_trick:
                         if c is None: flag = False 
@@ -169,4 +200,4 @@ class TestSkatEnv(unittest.TestCase):
         env.reset()
         legal_actions = env._get_legal_actions()
         for legal_action in legal_actions:
-            self.assertLess(legal_action, ActionEvent.first_declare_action_id)
+            self.assertLess(legal_action.action_id, ActionEvent.first_declare_action_id)
