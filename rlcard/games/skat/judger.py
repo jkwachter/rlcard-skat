@@ -89,19 +89,22 @@ class SkatJudger:
         
         round = self.game.round
         legal_actions: List[ActionEvent] = []
-        if not (round.round_phase is 'over'):
+        if not (round.round_phase == 'over'):
             current_player = round.current_player_id
-            if round.round_phase is 'bid':
-                top_bid_id = round.top_bidder.player_id
+            if round.round_phase == 'bid':
+                top_bid_id = -1
+                if round.top_bidder is not None:
+                    top_bid_id = round.top_bidder.player_id
                 (fore_id, mid_id, back_id) = (round._forehand().player_id, round._middlehand().player_id, round._backhand().player_id)
                 legal_actions.append(PassAction())
                 seniority = (fore_id == current_player) or (mid_id == current_player and back_id == top_bid_id)
                 if seniority:
                     legal_actions.append(BidAction(round.top_bid))
-                legal_bids = [b for b in bid_table if b > round.top_bid]
-                for bid in legal_bids:
-                    legal_actions.append(BidAction(bid))
-            if round.round_phase is 'declare':
+                else:
+                    legal_bids = [b for b in bid_table if b > round.top_bid]
+                    for bid in legal_bids:
+                        legal_actions.append(BidAction(bid))
+            if round.round_phase == 'declare':
                 curr_contract = round.round_contract
                 contract_declared = False
                 for contract in contract_table:
@@ -126,13 +129,20 @@ class SkatJudger:
                     else:
                         if 'Open' not in curr_contract:
                             legal_actions.append(DeclareModifierAction('Open'))
-            if round.round_phase is 'play':
+            if round.round_phase == 'play':
                 contract = round.round_contract
                 trick_moves = self.game.round.get_trick_moves()
-                hand = self.game.round.players[current_player]
-                legal_cards = [card for card in hand if (card in utils.trump_suit(contract)) or (card in utils.trick_suit(contract, trick_moves[0].card))]
+                hand = self.game.round.players[current_player].hand
+                if trick_moves == []:
+                    legal_cards = hand
+                else:
+                    legal_cards = [card for card in hand if (card in utils.trump_suit(contract)) or (card in utils.trick_suit(contract, trick_moves[0].card))]
                 for card in legal_cards:
                     legal_actions.append(PlayCardAction(card=card))
+                # If none of the cards satisfy, then any card can be played to the trick
+                if len(legal_actions) == 0:
+                    for card in hand:
+                        legal_actions.append(PlayCardAction(card=card))
         return legal_actions
                 
                 

@@ -57,7 +57,7 @@ class SkatRound:
         # all of the players in the round
         self.players: List[SkatPlayer] = []
         # ID of the current player to move
-        self.current_player_id: int = dealer_id
+        self.current_player_id: int = -1
         # top bid value, in points
         self.top_bid: int = 0
         # player who currently has the top bid
@@ -80,6 +80,7 @@ class SkatRound:
         for player_id in range(num_players):
             self.players.append(SkatPlayer(player_id=player_id, np_random=self.np_random))
         self.move_history.append(DealHandMove(dealer=self.players[dealer_id], shuffled_deck=self.dealer.shuffled_deck))
+        self.current_player_id = self._middlehand().player_id
 
     def is_bidding_over(self) -> bool:
         '''Return whether current bidding is over
@@ -137,7 +138,7 @@ class SkatRound:
                 cards_to_trick = self.cards_played % 3
                 if cards_to_trick == 0:
                     cards_to_trick = 3
-                for move in self.move_history[-cards_to_trick]:
+                for move in self.move_history[-cards_to_trick:]:
                     if isinstance(move, PlayCardMove):
                         trick_moves.append(move)
                 if len(trick_moves) != cards_to_trick:
@@ -152,7 +153,8 @@ class SkatRound:
             player_tricks = self.tricks_won[player_id]
             player_score = 0
             for t in player_tricks:
-                player_score += utils.get_value_of_card(t.card)
+                for c in t:
+                    player_score += utils.get_value_of_card(c.card)
             scores[player_id] = player_score
         return scores
 
@@ -164,7 +166,7 @@ class SkatRound:
     def _get_declarer(self) -> SkatPlayer:
         '''Get the declarer of the round
         '''
-        return self.top_bidder.player_id if self.top_bidder is not None else self._forehand()
+        return self.top_bidder if self.top_bidder is not None else self._forehand()
 
     def _forehand(self) -> SkatPlayer:
         '''Get the forehand
@@ -188,15 +190,20 @@ class SkatRound:
         (forehand, middlehand, backhand) = (self._forehand(), self._middlehand(), self._backhand())
         if isinstance(action, PassAction):
             if current_player == middlehand:
+                #print("Bidding completed!" if self.top_bidder is backhand else f"Passing bid to {backhand}")
                 return None if self.top_bidder is backhand else backhand #BH wins, else FH v BH
             if current_player == backhand:
+                #print("Bidding completed!")
                 return None #either FH or MH wins
             if current_player == forehand:
+                #print(f"Passing bid to {backhand}" if self.top_bidder is middlehand else "Bidding completed!")
                 return backhand if self.top_bidder is middlehand else None #MH v BH, else BH wins
         if isinstance(action, BidAction):
             previous_top = self.top_bidder
             self.top_bidder = current_player
-            return previous_top
+            #print(f"Bid made by {current_player}, passing bid to {previous_top if previous_top is not None else forehand}")
+            # If there are no bids yet, this is the middlehand's bid
+            return previous_top if previous_top is not None else forehand
         
     def _get_current_scores(self) -> List[int]:
         '''Get the current scores for the round based on the tricks taken by each player.
@@ -238,15 +245,16 @@ class SkatRound:
         '''Record and execute player's BidAction step in the round
         '''
         current_player = self._get_current_player()
+        next_player = self._get_next_bidder(action)
         if isinstance(action, PassAction):
             self.move_history.append(MakePassMove(current_player))
         elif isinstance(action, BidAction):
             self.move_history.append(BidMove(current_player, action))
             self.top_bid = action.bid_amount
-        next_player = self._get_next_bidder(action)
+            self.top_bidder = current_player
         if next_player is None:
             if not self.is_round_over():
-                declarer_id = self._get_declarer()
+                declarer_id = self._get_declarer().player_id
                 self.current_player_id = declarer_id
         else:
             self.current_player_id = next_player.player_id

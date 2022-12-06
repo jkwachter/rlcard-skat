@@ -45,10 +45,10 @@ def trump_suit(contract: List[str]) -> List[SkatCard]:
         ten = suit.pop(3)
         suit.insert(-1, ten)
         trump = suit + jacks
-    elif contract_index == 5:
+    elif contract_index == 4:
         # Grand game; should add jacks
         trump = SkatCard.get_rank(4)
-    elif contract_index != 6:
+    elif contract_index != 5:
         raise Exception(f'Invalid contract: {contract}')
     return trump
 

@@ -5,6 +5,7 @@
 """
 
 from typing import List
+from collections import OrderedDict
 
 import numpy as np
 
@@ -59,6 +60,7 @@ class SkatGame:
     def step(self, action: ActionEvent):
         '''Perform appropriate game action and return the next player number with their state
         '''
+
         if isinstance(action, CallAction):
             ## Place a bid (or pass) if an action is a bid (or pass)
             self.round.place_bid(action=action)
@@ -89,13 +91,14 @@ class SkatGame:
         '''
         return self.round.is_round_over()
     
-    def get_state(self):
-        ''' TODO: Implement this function!
+    def get_state(self, player_id=None):
+        ''' Get the current player's state in the game
         '''
         
         abstract_state = self.round.get_imperfect_information()
         state = {}
-        player_id = abstract_state['current_player_id']
+        if player_id is None:
+            player_id = abstract_state['current_player_id']
         
         ### Construct a representation of each players' hand
         state['hand'] = np.array([[0]*32]*3)
@@ -105,8 +108,9 @@ class SkatGame:
         ### Construct a representation of the trick pile for each player
         state['curr_tricks'] = np.array([[0]*32]*3)
         for i in range(3):
-            trick_card_id = abstract_state['trick_moves'][i].card_id
-            state['curr_tricks'][i][trick_card_id] = 1
+            if abstract_state['trick_moves'][i] is not None:
+                trick_card_id = abstract_state['trick_moves'][i].card_id
+                state['curr_tricks'][i][trick_card_id] = 1
         
         ### Construct a representation of the won cards for each player
         state['past_tricks'] = np.array([[0]*32]*3)
@@ -138,23 +142,24 @@ class SkatGame:
         state['dealer'] = np.array([0, 0, 0])
         state['dealer'][abstract_state['dealer']] = 1
         state['curr_player'] = np.array([0, 0, 0])
-        state['curr_player']['player_id'] = 1
+        state['curr_player'][player_id] = 1
         
         ### Represent the phase of the game
         state['game_phase'] = np.array([0, 0, 0, 0])
-        if round.round_phase == 'bid':
+        if self.round.round_phase == 'bid':
             state['game_phase'][0] = 1
-        elif round.round_phase == 'declare':
+        elif self.round.round_phase == 'declare':
             state['game_phase'][1] = 1
-        elif round.round_phase == 'play':
+        elif self.round.round_phase == 'play':
             state['game_phase'][2] = 1
         else:
             state['game_phase'][3] = 1
         
         ### Represent the legal actions that can currently be taken
-        state['legal_actions'] = np.array([0]*ActionEvent.get_num_actions())
-        for legal_action in self.judger.get_legal_actions():
-            state['legal_actions'][legal_action.action_id] = 1
+        legal_actions = self.judger.get_legal_actions()
+        legal_dict = {event.action_id: None for event in legal_actions}
+        # Package this into the final extracted state to return
+        state['legal_actions'] = OrderedDict(legal_dict)
         return state
         
     
