@@ -76,17 +76,13 @@ class TestSkatEnv(unittest.TestCase):
     def test_step_back(self):
         pass
 
-    # CURRENT NOTES ON TEST_RUN:
-    # We have two known issues at the moment:
-    # 1. When playing cards, the player can select some cards not in their hand.
-    # I am unsure as to why it is doing this and need to look further.
-    # 2. The action list can be empty.
-    # This should be impossible--I suspect it is not adequately recognizing that
-    # a given round is over.
+    # WARNING: Running this test takes a long time.
+    # You can reduce the num_iters parameter to decrease its length.
+    num_iters = 10000
 
     def test_run(self):
         env = rlcard.make('skat')
-        for i in range(1000):
+        for i in range(self.num_iters):
             # We want to run many random tests and make sure we are not
             # playing nonsensical games. 
             env.reset()
@@ -128,6 +124,11 @@ class TestSkatEnv(unittest.TestCase):
                     self.assertLessEqual(num_passes, 2)
                     locked_out_players[player_id] = True
                     if (num_passes == 2):
+                        if top_bidder == None:
+                            for i in range(3): 
+                                if locked_out_players[i] == False:
+                                    print(f'Both players passed! Getting player {i}')
+                                    top_bidder = round.players[i]
                         round_phase = 'declare'
                 elif isinstance(move, DeclareContractMove):
                     #Must be in the declaration phase
