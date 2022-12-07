@@ -24,6 +24,12 @@ class SkatPlayer:
             return self.player_id == other.player_id
         return False
 
+    def __str__(self):
+        return f'Player {self.player_id+1}'
+
+    def __repr__(self):
+        return str(self)
+
     def remove_card(self, card: SkatCard):
         '''Remove a given card from the player's hand
 

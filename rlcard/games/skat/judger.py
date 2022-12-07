@@ -127,6 +127,7 @@ class SkatJudger:
                             elif 'Open' not in curr_contract:
                                 legal_actions.append(DeclareModifierAction('Open'))
                     else:
+                        legal_actions.append(FinishContractAction())
                         if 'Open' not in curr_contract:
                             legal_actions.append(DeclareModifierAction('Open'))
             if round.round_phase == 'play':

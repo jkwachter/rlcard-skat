@@ -118,13 +118,15 @@ class SkatRound:
         '''
         trump_suit = utils.trump_suit(self.round_contract)
         matadors = 0
+        if 'N' in self.round_contract or 'G' in self.round_contract:
+            return 1
         for player in self.players:
             chk_hand = player.hand
             if player == self._get_declarer():
                 chk_hand = chk_hand + self.dealer.skat
-            if trump_suit[-1] in player.hand:
+            if trump_suit[-1] in chk_hand:
                 for i in reversed(range(len(trump_suit))):
-                    if trump_suit[i] in player.hand:
+                    if trump_suit[i] in chk_hand:
                         matadors += 1
                     else:
                         return matadors
@@ -248,8 +250,10 @@ class SkatRound:
         next_player = self._get_next_bidder(action)
         if isinstance(action, PassAction):
             self.move_history.append(MakePassMove(current_player))
+            print(MakePassMove(current_player), (self.top_bid, self.top_bidder))
         elif isinstance(action, BidAction):
             self.move_history.append(BidMove(current_player, action))
+            print(BidMove(current_player, action), (self.top_bid, self.top_bidder))
             self.top_bid = action.bid_amount
             self.top_bidder = current_player
         if next_player is None:
@@ -265,6 +269,7 @@ class SkatRound:
         current_player = self._get_current_player()
         if isinstance(action, DeclareContractAction):
             self.move_history.append(DeclareContractMove(current_player, action))
+            print(DeclareContractMove(current_player, action), self.round_contract)
             self.round_contract.append(action.contract_type)
             contract_id = utils.get_contract_index(self.round_contract)
             if contract_id < 4:
@@ -278,6 +283,7 @@ class SkatRound:
                 self.contract_score = 23
         if isinstance(action, DeclareModifierAction):
             self.move_history.append(DeclareModifierMove(current_player, action))
+            print(DeclareModifierMove(current_player, action), self.round_contract)
             self.round_contract.append(action.modifier_type)
             contract_id = utils.get_contract_index(self.round_contract)
             modifier_id = utils.get_modifier_index(action.modifier_type)
@@ -300,13 +306,16 @@ class SkatRound:
         if isinstance(action, FinishContractAction):
             self.game_modifier += self._get_matadors()
             self.move_history.append(FinishContractMove(current_player, action))
+            print(FinishContractMove(current_player, action), self.round_contract)
             self.current_player_id = self._forehand().player_id
+            self.initial_hands = [self.players[i].hand for i in range(3)]
 
     def play_card(self, action: PlayCardAction):
         '''Record and execute player's PlayCardAction step in the round
         '''
         current_player = self._get_current_player()
         self.move_history.append(PlayCardMove(current_player, action))
+        print(PlayCardMove(current_player, action), current_player.hand)
         card = action.card
         current_player.remove_card(card)
         self.cards_played += 1
@@ -315,9 +324,10 @@ class SkatRound:
         if len(trick_moves) == 3:
             # determine which card and player have won the round
             trump_suit = utils.trump_suit(self.round_contract)
+            is_null = 'N' in self.round_contract
             winning_card = trick_moves[0].card
             trick_value = utils.get_value_of_card(winning_card)
-            trick_suit = trump_suit if winning_card.suit == trump_suit[0].suit else utils.trick_suit(self.round_contract, winning_card)
+            trick_suit = utils.trick_suit(self.round_contract, winning_card) if (is_null or winning_card.suit != trump_suit[0].suit) else trump_suit 
             trick_winner = trick_moves[0].player
             for move in trick_moves[1:]:
                 switch_flag = False
