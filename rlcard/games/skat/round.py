@@ -192,18 +192,18 @@ class SkatRound:
         (forehand, middlehand, backhand) = (self._forehand(), self._middlehand(), self._backhand())
         if isinstance(action, PassAction):
             if current_player == middlehand:
-                #print("Bidding completed!" if self.top_bidder is backhand else f"Passing bid to {backhand}")
+                ##print("Bidding completed!" if self.top_bidder is backhand else f"Passing bid to {backhand}")
                 return None if self.top_bidder is backhand else backhand #BH wins, else FH v BH
             if current_player == backhand:
-                #print("Bidding completed!")
+                ##print("Bidding completed!")
                 return None #either FH or MH wins
             if current_player == forehand:
-                #print(f"Passing bid to {backhand}" if self.top_bidder is middlehand else "Bidding completed!")
+                ##print(f"Passing bid to {backhand}" if self.top_bidder is middlehand else "Bidding completed!")
                 return backhand if self.top_bidder is middlehand else None #MH v BH, else BH wins
         if isinstance(action, BidAction):
             previous_top = self.top_bidder
             self.top_bidder = current_player
-            #print(f"Bid made by {current_player}, passing bid to {previous_top if previous_top is not None else forehand}")
+            ##print(f"Bid made by {current_player}, passing bid to {previous_top if previous_top is not None else forehand}")
             # If there are no bids yet, this is the middlehand's bid
             return previous_top if previous_top is not None else forehand
         
@@ -250,10 +250,10 @@ class SkatRound:
         next_player = self._get_next_bidder(action)
         if isinstance(action, PassAction):
             self.move_history.append(MakePassMove(current_player))
-            print(MakePassMove(current_player), (self.top_bid, self.top_bidder))
+            #print(MakePassMove(current_player), (self.top_bid, self.top_bidder))
         elif isinstance(action, BidAction):
             self.move_history.append(BidMove(current_player, action))
-            print(BidMove(current_player, action), (self.top_bid, self.top_bidder))
+            #print(BidMove(current_player, action), (self.top_bid, self.top_bidder))
             self.top_bid = action.bid_amount
             self.top_bidder = current_player
         if next_player is None:
@@ -269,7 +269,7 @@ class SkatRound:
         current_player = self._get_current_player()
         if isinstance(action, DeclareContractAction):
             self.move_history.append(DeclareContractMove(current_player, action))
-            print(DeclareContractMove(current_player, action), self.round_contract)
+            #print(DeclareContractMove(current_player, action), self.round_contract)
             self.round_contract.append(action.contract_type)
             contract_id = utils.get_contract_index(self.round_contract)
             if contract_id < 4:
@@ -283,7 +283,7 @@ class SkatRound:
                 self.contract_score = 23
         if isinstance(action, DeclareModifierAction):
             self.move_history.append(DeclareModifierMove(current_player, action))
-            print(DeclareModifierMove(current_player, action), self.round_contract)
+            #print(DeclareModifierMove(current_player, action), self.round_contract)
             self.round_contract.append(action.modifier_type)
             contract_id = utils.get_contract_index(self.round_contract)
             modifier_id = utils.get_modifier_index(action.modifier_type)
@@ -306,7 +306,8 @@ class SkatRound:
         if isinstance(action, FinishContractAction):
             self.game_modifier += self._get_matadors()
             self.move_history.append(FinishContractMove(current_player, action))
-            print(FinishContractMove(current_player, action), self.round_contract)
+            #print(FinishContractMove(current_player, action), self.round_contract)
+            self.top_bidder = current_player
             self.current_player_id = self._forehand().player_id
             self.initial_hands = [self.players[i].hand for i in range(3)]
 
@@ -315,7 +316,7 @@ class SkatRound:
         '''
         current_player = self._get_current_player()
         self.move_history.append(PlayCardMove(current_player, action))
-        print(PlayCardMove(current_player, action), current_player.hand)
+        #print(PlayCardMove(current_player, action), current_player.hand)
         card = action.card
         current_player.remove_card(card)
         self.cards_played += 1
