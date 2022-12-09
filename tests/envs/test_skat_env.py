@@ -8,7 +8,7 @@ from .determism_util import is_deterministic
 
 from rlcard.games.skat.utils.action_event import ActionEvent, PassAction, BidAction, PlayCardAction, DeclareContractAction, DeclareModifierAction, FinishContractAction
 from rlcard.games.skat.utils.skat_card import SkatCard
-from rlcard.games.skat.utils.move import BidMove, MakePassMove, DeclareContractMove, DeclareModifierMove, FinishContractMove, PlayCardMove
+from rlcard.games.skat.utils.move import BidMove, MakePassMove, DeclareContractMove, DeclareModifierMove, FinishContractMove, PlayCardMove, DiscardCardMove, DiscardCardAction
 import rlcard.games.skat.utils.utils as utils
 
 # This table of bids lists every unique bid value available within Skat
@@ -47,10 +47,12 @@ class TestSkatEnv(unittest.TestCase):
             elif ActionEvent.first_modifier_action_id <= i < ActionEvent.finish_contract_action_id:
                 idx = i - ActionEvent.first_modifier_action_id
                 self.assertEqual(action, DeclareModifierAction(modifier_table[idx]))
-            elif ActionEvent.first_play_card_action_id <= i < ActionEvent.first_play_card_action_id + 32:
+            elif ActionEvent.first_play_card_action_id <= i < ActionEvent.first_discard_card_action_id:
                 idx = i - ActionEvent.first_play_card_action_id
                 self.assertEqual(action, PlayCardAction(SkatCard.card(idx)))
-            else:
+            elif ActionEvent.first_declare_action_id <= i < ActionEvent.first_discard_card_action_id + 32:
+                idx = i - ActionEvent.first_discard_card_action_id
+                self.assertEqual(action, DiscardCardAction(SkatCard.card(idx)))
                 pass
 
     # Testing if the game is deterministic:
@@ -160,6 +162,12 @@ class TestSkatEnv(unittest.TestCase):
                     elif modifier == 'Hand':
                         self.assertNotIn('Skat', contract)
                     contract.append(modifier)
+                elif isinstance(move, DiscardCardMove):
+                    #Must be in the declaration phase
+                    self.assertEqual(round_phase, 'declare')
+                    #The person discarding must be the top bidder
+                    self.assertEqual(player, top_bidder)
+                    #The card discarded must be in the hand of the player
                 elif isinstance(move, FinishContractMove):
                     #Must be in the declaration phase
                     self.assertEqual(round_phase, 'declare')

@@ -10,7 +10,7 @@ import numpy as np
 from .utils import utils as utils
 
 from .utils.action_event import PlayCardAction, ActionEvent
-from .utils.action_event import DeclareContractAction, DeclareModifierAction, FinishContractAction, DeclareAction
+from .utils.action_event import DeclareContractAction, DeclareModifierAction, FinishContractAction, DeclareAction, DiscardCardAction
 from .utils.action_event import BidAction, PassAction
 
 bid_table = [18, 20, 22, 23, 24, 27, 30, 33, 35, 36, 40, 44, 45, 46, 48, 50, 54, 55, 59, 60, 63,
@@ -106,6 +106,7 @@ class SkatJudger:
                         legal_actions.append(BidAction(bid))
             if round.round_phase == 'declare':
                 curr_contract = round.round_contract
+                player_hand = round.players[current_player].hand
                 contract_declared = False
                 for contract in contract_table:
                     if contract in curr_contract:
@@ -113,6 +114,9 @@ class SkatJudger:
                 if not contract_declared:
                     for contract in contract_table:
                         legal_actions.append(DeclareContractAction(contract))
+                elif 'Skat' in curr_contract and len(player_hand) > 10:
+                    for card in player_hand:
+                        legal_actions.append(DiscardCardAction(card))
                 else:
                     if 'Hand' not in curr_contract and 'Skat' not in curr_contract:
                         legal_actions.append(DeclareModifierAction('Skat'))

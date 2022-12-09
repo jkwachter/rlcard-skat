@@ -39,6 +39,7 @@ class ActionEvent(object):
     first_modifier_action_id = 71
     finish_contract_action_id = 76
     first_play_card_action_id = 77
+    first_discard_card_action_id = 109
 
     def __init__(self, action_id: int):
         ''' Initialize an abstract ActionEvent, should not normally do
@@ -80,10 +81,14 @@ class ActionEvent(object):
             idx = action_id - ActionEvent.first_modifier_action_id
             modifier = modifier_table[idx]
             return DeclareModifierAction(modifier)
-        elif ActionEvent.first_play_card_action_id <= action_id < ActionEvent.first_play_card_action_id + 32:
+        elif ActionEvent.first_play_card_action_id <= action_id < ActionEvent.first_discard_card_action_id:
             idx = action_id - ActionEvent.first_play_card_action_id
             card = SkatCard.card(idx)
             return PlayCardAction(card)
+        elif ActionEvent.first_discard_card_action_id <= action_id < ActionEvent.first_discard_card_action_id + 32:
+            idx = action_id - ActionEvent.first_discard_card_action_id
+            card = SkatCard.card(idx)
+            return DiscardCardAction(card)
         else:
             raise Exception(f'ActionEvent from_action_id: invalid action_id={action_id}')
 
@@ -91,7 +96,7 @@ class ActionEvent(object):
     def get_num_actions():
         ''' Get the total number of unique actions within the game
         '''
-        return 109
+        return 141
 
 class CallAction(ActionEvent):
     ''' Interface for bidding-related ActionEvents
@@ -157,6 +162,17 @@ class FinishContractAction(DeclareAction):
 
     def __str__(self):
         return "finish"
+
+class DiscardCardAction(DeclareAction):
+    ''' ActionEvent to discard a card after picking up the skat.
+    '''
+    def __init__(self, card: SkatCard):
+        discard_card_action_id = ActionEvent.first_discard_card_action_id + card.card_id
+        super().__init__(action_id=discard_card_action_id)
+        self.card: SkatCard = card
+
+    def __str__(self):
+        return f"{self.card}"
 
 class PlayCardAction(ActionEvent):
     ''' ActionEvent to play a card during around, initialized with the given card

@@ -123,6 +123,11 @@ class SkatGame:
         for i in range(32):
             if np.sum(state['past_tricks'][:,i] + state['curr_tricks'][:,i] + state['hand'][:,i]) == 0:
                 state['hidden'][i] = 1
+        if (abstract_state['top_bidder'] is not None) and \
+           (abstract_state['top_bidder'].player_id == abstract_state['current_player_id']) and \
+           ('Skat' in abstract_state['contract']):
+            for card in abstract_state['skat']:
+                state['hidden'][card.card_id] = 0
         
         ### Represent the current contract
         state['contract'] = np.array([0]*14)
@@ -183,6 +188,6 @@ class SkatGame:
         sz += 2*3 # Dealer representation (3) [players]
         # Current player representation (3)
         sz += 3 # Game phase representation (3) [bidding, declaring, playing]
-        sz += 108 # Action representation
+        sz += 141 # Action representation
         return sz
 

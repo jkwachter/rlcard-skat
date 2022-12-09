@@ -6,8 +6,8 @@
 
 from typing import List, Tuple
 
-from .utils.move import SkatMove, DealHandMove, DeclareContractMove, DeclareModifierMove, FinishContractMove, MakePassMove, BidMove, DeclareMove, PlayCardMove
-from .utils.action_event import BidAction, PassAction, DeclareContractAction, DeclareModifierAction, FinishContractAction, PlayCardAction, CallAction, DeclareAction
+from .utils.move import SkatMove, DealHandMove, DeclareContractMove, DeclareModifierMove, FinishContractMove, MakePassMove, BidMove, DeclareMove, PlayCardMove, DiscardCardMove
+from .utils.action_event import BidAction, PassAction, DeclareContractAction, DeclareModifierAction, FinishContractAction, PlayCardAction, CallAction, DeclareAction, DiscardCardAction
 
 from .dealer import SkatDealer
 from .player import SkatPlayer
@@ -192,18 +192,18 @@ class SkatRound:
         (forehand, middlehand, backhand) = (self._forehand(), self._middlehand(), self._backhand())
         if isinstance(action, PassAction):
             if current_player == middlehand:
-                ##print("Bidding completed!" if self.top_bidder is backhand else f"Passing bid to {backhand}")
+                #print("Bidding completed!" if self.top_bidder is backhand else f"Passing bid to {backhand}")
                 return None if self.top_bidder is backhand else backhand #BH wins, else FH v BH
             if current_player == backhand:
-                ##print("Bidding completed!")
+                #print("Bidding completed!")
                 return None #either FH or MH wins
             if current_player == forehand:
-                ##print(f"Passing bid to {backhand}" if self.top_bidder is middlehand else "Bidding completed!")
+                #print(f"Passing bid to {backhand}" if self.top_bidder is middlehand else "Bidding completed!")
                 return backhand if self.top_bidder is middlehand else None #MH v BH, else BH wins
         if isinstance(action, BidAction):
             previous_top = self.top_bidder
             self.top_bidder = current_player
-            ##print(f"Bid made by {current_player}, passing bid to {previous_top if previous_top is not None else forehand}")
+            #print(f"Bid made by {current_player}, passing bid to {previous_top if previous_top is not None else forehand}")
             # If there are no bids yet, this is the middlehand's bid
             return previous_top if previous_top is not None else forehand
         
@@ -303,6 +303,9 @@ class SkatRound:
                 if modifier_id == 4:
                     # Open adds 23 to null contract score
                     self.contract_score += 23
+            if modifier_id == 0:
+                # If we have declared a skat game, pick up the skat
+                self.dealer.deal_skat(current_player)
         if isinstance(action, FinishContractAction):
             self.game_modifier += self._get_matadors()
             self.move_history.append(FinishContractMove(current_player, action))
@@ -310,6 +313,11 @@ class SkatRound:
             self.top_bidder = current_player
             self.current_player_id = self._forehand().player_id
             self.initial_hands = [self.players[i].hand for i in range(3)]
+        if isinstance(action, DiscardCardAction):
+            self.move_history.append(DiscardCardMove(current_player, action))
+            #print(DiscardCardMove(current_player, action), current_player.hand)
+            self.dealer.skat.append(action.card) # This keeps matadors check alive!
+            current_player.remove_card(action.card)
 
     def play_card(self, action: PlayCardAction):
         '''Record and execute player's PlayCardAction step in the round
@@ -383,6 +391,7 @@ class SkatRound:
         if self.is_declaring_over():
             for trick_move in self.get_trick_moves():
                 trick_moves[trick_move.player.player_id] = trick_move.card
+        player_is_top = (self.top_bidder is not None) and (self.current_player_id == self.top_bidder.player_id)
         state['dealer'] = self.dealer_pos
         state['current_player_id'] = self.current_player_id
         state['round_phase'] = self.round_phase
@@ -394,5 +403,6 @@ class SkatRound:
         state['past_tricks'] = self.tricks_won
         state['scores'] = self._calculate_current_scores()
         state['trick_moves'] = trick_moves
+        state['skat'] = self.dealer.skat if player_is_top else None
         return state
         

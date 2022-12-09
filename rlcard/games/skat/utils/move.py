@@ -5,7 +5,7 @@
 """
 from typing import List
 
-from .action_event import ActionEvent, BidAction, PassAction, DeclareContractAction, DeclareModifierAction, FinishContractAction, PlayCardAction
+from .action_event import ActionEvent, BidAction, PassAction, DeclareContractAction, DeclareModifierAction, FinishContractAction, PlayCardAction, DiscardCardAction
 from .skat_card import SkatCard
 
 from ..player import SkatPlayer
@@ -109,3 +109,17 @@ class PlayCardMove(PlayerMove):
     
     def __str__(self):
         return f'{self.player} plays {self.action}'
+
+class DiscardCardMove(DeclareMove):
+    ''' DiscardCard Move representation
+    '''
+    def __init__(self, player: SkatPlayer, action: DiscardCardAction):
+        super().__init__(player=player, action=action)
+        self.action = action
+    
+    @property
+    def card(self):
+        return self.action.card
+
+    def __str__(self):
+        return f'{self.player} discards {self.action}'

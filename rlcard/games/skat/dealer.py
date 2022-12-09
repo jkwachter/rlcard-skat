@@ -42,3 +42,12 @@ class SkatDealer:
         '''
         for _ in range(2):
             self.skat.append(self.deck.pop())
+
+    def deal_skat(self, player: SkatPlayer):
+        '''Deal the skat to a player in the round
+        
+        Args:
+            player (SkatPlayer): The player to deal the skat to
+        '''
+        for c in self.skat: 
+            player.hand.append(c)
