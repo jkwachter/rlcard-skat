@@ -49,6 +49,7 @@ class SkatJudger:
         contract_score, multiplier = round.contract_score, round.game_modifier
         declarer_id = round.top_bidder.player_id
         (schneider_met, schwarz_met, for_declarer) = round.determine_schneider_schwarz()
+        is_null_round = 'N' in round.round_contract
         # our goal now is to extract the contract value from the contract and determine if it is satisfactory
         payoffs = np.array([0, 0, 0])
         if schwarz_met:
@@ -60,11 +61,18 @@ class SkatJudger:
         schneider_failed = ("Schneider" in round.round_contract) and not (schneider_met and for_declarer)
         schwarz_failed = ("Schwarz" in round.round_contract) and not (schwarz_met and for_declarer)
         
+        #If the round is a null round, then declarer wins if they score no points.
+        if is_null_round:
+            if (scores[declarer_id] == 0):
+                payoffs[declarer_id] = final_value
+            else:
+                payoffs[declarer_id] = -final_value * 2
+
         #If as declarer you announce Schneider but take less than 90 card points, or if you announce Schwarz or Open and lose a trick, you lose
         #counting all the multipliers you would have won if you had succeeded.
         #If the value of the declarer's game turns out to be less than the bid then the declarer automatically loses
-        #The amount subtracted from score is twice the least multiple of the base value of the game actually played which would have fulfilled the bid.
-        if final_value < round.top_bid or schneider_failed or schwarz_failed:
+        #The amount subtracted from score is twice the least multiple of the base value of the game actually played which would have fulfilled the bid.    
+        elif final_value < round.top_bid or schneider_failed or schwarz_failed:
             least_multiple = ((round.top_bid // contract_score) + 1)
             required_value = contract_score * least_multiple
             payoffs[declarer_id] = -required_value * 2
