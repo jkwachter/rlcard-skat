@@ -11,7 +11,7 @@ import numpy as np
 
 from .judger import SkatJudger
 from .round import SkatRound
-from .utils.action_event import ActionEvent, CallAction, DeclareAction, PlayCardAction
+from .utils.action_event import ActionEvent, CallAction, DeclareAction, PlayCardAction, BidAction
 
 from .utils import utils as utils
 
@@ -128,6 +128,14 @@ class SkatGame:
            ('Skat' in abstract_state['contract']):
             for card in abstract_state['skat']:
                 state['hidden'][card.card_id] = 0
+
+        ### Construct a representation of the top bid for the round
+        state['top_bid'] = np.array([0]*64)
+        top_bid_val = abstract_state['top_bid']
+        if top_bid_val == 0:
+            state['top_bid'][0] = 1
+        else:
+            state['top_bid'][BidAction(top_bid_val).action_id] = 1
         
         ### Represent the current contract
         state['contract'] = np.array([0]*14)
@@ -165,6 +173,9 @@ class SkatGame:
         legal_dict = {event.action_id: None for event in legal_actions}
         # Package this into the final extracted state to return
         state['legal_actions'] = OrderedDict(legal_dict)
+        state['raw_legal_actions'] = np.array([0]*ActionEvent.get_num_actions())
+        for event in legal_actions:
+            state['raw_legal_actions'][event.action_id] = 1
         return state
         
     
@@ -178,16 +189,16 @@ class SkatGame:
         '''
         sz = 0
         # Need to account for:
-        sz += 11*32 # Hand representation (3*32) [players * unique cards]
+        sz += 10*32 # Hand representation (3*32) [players * unique cards]
         # Trick representation (3*32)
         # Won cards representation (3*32)
         # Hidden cards (32) [unique cards]
+        sz += 64 # Bid representation (64), for all bid values + no bid
         sz += 14 # Contract representation (14) 
                  # [6 contract types + 7 score modifiers + schneider/schwarz won by declarer]
-        sz += 63 # Bid representation (64) [current bid values, incl. no bid]
         sz += 2*3 # Dealer representation (3) [players]
         # Current player representation (3)
-        sz += 3 # Game phase representation (3) [bidding, declaring, playing]
-        sz += 141 # Action representation
+        sz += 4 # Game phase representation (3) [bidding, declaring, playing]
+        sz += self.get_num_actions() # Action representation
         return sz
 

@@ -43,13 +43,22 @@ class SkatEnv(Env):
             (numpy.array): The extracted state
         '''
         state =  self.game.get_state()
-        rep = [state['hand'], state['curr_tricks'], state['past_tricks'], state['hidden'], state['contract'], state['dealer'], state['curr_player'], state['game_phase']]
+        rep = [state['hand'], 
+               state['curr_tricks'], 
+               state['past_tricks'], 
+               state['hidden'], 
+               state['top_bid'],
+               state['contract'], 
+               state['dealer'], 
+               state['curr_player'], 
+               state['game_phase'],
+               state['raw_legal_actions']]
         obs = np.concatenate([e.flatten() for e in rep])
         raw_legal_actions = list(state['legal_actions'].keys())
         extracted_state = {'obs': obs, 
                            'raw_obs': obs,
                            'legal_actions': state['legal_actions'], 
-                           'raw_legal_actions': raw_legal_actions}
+                           'raw_legal_actions': state['raw_legal_actions']}
         return extracted_state
 
     
