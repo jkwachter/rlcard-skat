@@ -86,6 +86,8 @@ class SkatJudger:
         #then twice the value of the game is subtracted from the declarer's score.
         else:
             payoffs[declarer_id] = -final_value * 2
+
+        return payoffs
             
 
     def get_legal_actions(self) -> List[ActionEvent]:

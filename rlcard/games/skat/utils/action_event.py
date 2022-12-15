@@ -15,6 +15,7 @@ from .skat_card import SkatCard
 #       71 to 75 -> declare_modifier_id (Skat, Hand, Schneider, Schwarz, Open)
 #       76 -> finish_contract_id
 #       77 to 108 -> play_card_action_id
+#       109 to 141 -> discard_card_action_id
 # ====================================
 
 # This table of bids lists every unique bid value available within Skat
